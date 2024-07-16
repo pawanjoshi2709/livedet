@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Upload and Processing</title>
+    <script>
+        function updateProgress() {
+            fetch('/progress')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('progress').innerText = `Processing: ${data.progress}%`;
+                    if (data.progress < 100) {
+                        setTimeout(updateProgress, 1000);
+                    } else {
+                        document.getElementById('download-section').style.display = 'block';
+                    }
+                });
+        }
+
+        function startProcessing(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            document.getElementById('progress').innerText = 'Processing: 0%';
+            document.getElementById('download-section').style.display = 'none';
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('download-link').href = `/download/${data.video_path}`;
+                setTimeout(updateProgress, 1000);
+            });
+        }
+
+        function startWebcam() {
+            const webcamElement = document.getElementById('webcam');
+            webcamElement.src = '/webcam_feed';
+        }
+    </script>
+</head>
+<body>
+    <h1>Upload and Process Video</h1>
+    <form onsubmit="startProcessing(event)">
+        <input type="file" name="file" accept="video/*" required>
+        <button type="submit">Upload Video</button>
+    </form>
+    <div id="progress">Processing: 0%</div>
+
+    <div id="download-section" style="display: none;">
+        <h2>Download Processed Video</h2>
+        <a id="download-link" href="#" download>Download Processed Video</a>
+    </div>
+
+    <h1>Live Emotion Detection</h1>
+    <button onclick="startWebcam()">Start Webcam</button>
+    <div>
+        <img id="webcam" width="640" height="480">
+    </div>
+</body>
+</html>
